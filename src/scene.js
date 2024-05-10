@@ -9,6 +9,32 @@ export const myScene = () => {
     expanded: true,
   });
 
+  //mockdata
+  const planet = 
+  {
+    name: "Earth",
+    radius: 13,
+    position: [0, 0, 0],
+    speed: 0.002,
+    material: 'earthDay',
+    cloud:{
+      name:'Cloud',
+      radius: 1.07,
+      speed: 0.005,
+      opacity: 0.15,
+      material: 'cloud'
+    },
+    moons: [
+      {
+        name: "Moon",
+        radius: 0.25,
+        distance: 2,
+        speed: 0.01,
+        material: 'moon'
+      },
+    ],
+  };
+
   // Initialize the scene
   const scene = new THREE.Scene();
 
@@ -16,91 +42,60 @@ export const myScene = () => {
   const textureLoader = new THREE.TextureLoader();
   const earthDayMap = textureLoader.load('/textures/2k_earth_daymap.jpg');
   const earthNightMap = textureLoader.load('/textures/2k_earth_nightmap.jpg');
-//   const earthNormalMap = textureLoader.load('/textures/2k_earth_normal_map.tif');
-//   const earthSpecularMap = textureLoader.load('/textures/2k_earth_specular_map.tif');
   const earthCloudsMap = textureLoader.load('/textures/2k_earth_clouds.jpg');
   const moonTexture = textureLoader.load('/textures/2k_moon.jpg');
 
   // Add materials
-  const planetMaterial = new THREE.MeshStandardMaterial({
+  const earthDayMaterial = new THREE.MeshStandardMaterial({
     map: earthDayMap,
-    // normalMap: earthNormalMap,
-    // specularMap: earthSpecularMap,
-    // specular: new THREE.Color('gray')
+    name: 'earthDay',
+  });
+
+  const earthNightMaterial = new THREE.MeshStandardMaterial({
+    map: earthNightMap,
+    name: 'earthNight',
   });
 
   const moonMaterial = new THREE.MeshStandardMaterial({
     map: moonTexture,
+    name:'moon'
   });
+
+  const cloudMaterial = new THREE.MeshPhongMaterial({
+    map: earthCloudsMap,
+    name: 'cloud',
+    transparent: true,
+    opacity: planet.cloud.opacity
+    });
+
+    const materials = [];
+    materials.push(earthDayMaterial);
+    materials.push(earthNightMaterial);
+    materials.push(cloudMaterial);
+    materials.push(moonMaterial);
 
   // Add geometry
   const sphereGeometry = new THREE.SphereGeometry(1, 64, 64);
 
-  // Create cloud layer
-    const cloudGeometry = new THREE.SphereGeometry(1, 64, 64);
-    const cloudMaterial = new THREE.MeshPhongMaterial({
-    map: earthCloudsMap,
-    transparent: true,
-    opacity: 0.15
-    });
-
-    const cloudeMesh = new THREE.Mesh(cloudGeometry, cloudMaterial)
-    cloudeMesh.scale.setScalar(13.5);
-    scene.add(cloudeMesh);
-    
-
-  const planets = [
-    {
-      name: "Earth",
-      radius: 13,
-      position: [0, 0, 0],
-      speed: 0.002,
-      material: planetMaterial,
-      moons: [
-        {
-          name: "Moon",
-          radius: 0.25,
-          distance: 2,
-          speed: 0.01,
-          material: moonMaterial
-        },
-      ],
-    }
-  ];
-
-  const createPlanet = (planet) => {
-    const planetMesh = new THREE.Mesh(
-      sphereGeometry,
-      planet.material
-    );
+      // Add mesh
+    const planetMesh = new THREE.Mesh( sphereGeometry, materials.find(material => material.name === planet.material));
+    const cloudMesh = new THREE.Mesh(sphereGeometry, materials.find(material => material.name === planet.cloud.material));
+    const moonMesh = new THREE.Mesh(sphereGeometry,materials.find(material => material.name ===planet.moons[0].material));
 
     planetMesh.scale.setScalar(planet.radius);
     planetMesh.position.set(planet.position[0], planet.position[1], planet.position[2]);
-    return planetMesh;
-  }
 
-  const createMoon = (moon) => {
-    const moonMesh = new THREE.Mesh(
-      sphereGeometry,
-      moon.material
-    );
-    moonMesh.scale.setScalar(moon.radius);
-    moonMesh.position.x = moon.distance;
-    return moonMesh;
-  }
+    moonMesh.name = planet.moons[0].name;
+    moonMesh.scale.setScalar(planet.moons[0].radius);
+    moonMesh.position.x = planet.moons[0].distance;
 
-  const planetMeshes = planets.map((planet) => {
-    const planetMesh = createPlanet(planet);
+    cloudMesh.name = planet.cloud.name;
+    cloudMesh.scale.setScalar(planet.cloud.radius);
+
+    planetMesh.add(cloudMesh);
+    planetMesh.add(moonMesh);
     scene.add(planetMesh);
 
-    planet.moons.forEach((moon) => {
-      const moonMesh = createMoon(moon);
-      planetMesh.add(moonMesh);
-    });
-    return planetMesh;
-  });
-
-  console.log(planetMeshes);
 
   // Add lights
   const ambientLight = new THREE.AmbientLight(0x333333,1);
@@ -112,19 +107,6 @@ export const myScene = () => {
 
   const pointLightHelper = new THREE.PointLightHelper(pointLight, 1);
   scene.add(pointLightHelper);
-
-//   const directionalLight = new THREE.DirectionalLight(
-//     0xffffff,
-//     5
-//   );
-//   directionalLight.position.set(22, 17, -7);
-//   scene.add(directionalLight);
-
-  // Add the directional light helper
-//   const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 3);
-//   scene.add(directionalLightHelper);
-
-
 
   // Initialize the camera
   const camera = new THREE.PerspectiveCamera(
@@ -157,64 +139,89 @@ export const myScene = () => {
 
   // Add planet properties to the pane
   const planetFolder = pane.addFolder({ title: "Planet" });
-  planetFolder.addBinding(planets[0], "radius", { min: 5, max: 20, step: 0.1 }).on("change", (ev) => {
-    planetMeshes[0].scale.setScalar(ev.value);
+  planetFolder.addBinding(planet, "radius", { min: 5, max: 20, step: 0.1 }).on("change", (ev) => {
+    planetMesh.scale.setScalar(ev.value);
   });
-  planetFolder.addBinding(planets[0], "speed", { min: 0, max: 0.1, step: 0.001 });
+  planetFolder.addBinding(planet, "speed", { min: 0, max: 0.1, step: 0.001 });
+
+// Add toggle button to the pane
+const toggleTexture = { dayTexture: true };
+planetFolder.addBinding(toggleTexture, 'dayTexture', { label: 'Day Texture' }).on('change', ({value}) => {
+    planetMesh.material = value ? earthDayMaterial : earthNightMaterial;
+    planet.material = value ? 'earthDay' : 'earthNight';
+    // renderer.render(scene, camera);
+});
+
+    // Add cloud properties to the pane
+  const cloudFolder = pane.addFolder({ title: "Cloud" });
+  cloudFolder.addBinding(planet.cloud, "radius", { min: 1.01, max: 1.5, step: 0.01 })
+  .on("change", (ev) => {
+    planetMesh.children[0].scale.setScalar(ev.value);
+  });
+  cloudFolder.addBinding(planet.cloud, "speed", { min: 0, max: 0.05, step: 0.001 });
+  cloudFolder.addBinding(planet.cloud, "opacity", { min: 0, max: 1, step: 0.05 })
+ .on("change", (ev) => {
+    console.log(ev.value)
+    planet.cloud.opacity = ev.value;
+    planetMesh.children[0].material.opacity = ev.value;
+    renderer.render(scene,camera)
+  });
 
   // Add moon properties to the pane
   const moonFolder = pane.addFolder({ title: "Moon" });
-  moonFolder.addBinding(planets[0].moons[0], "radius", { min: 0.1, max: 1, step: 0.05 }).on("change", (ev) => {
-    planetMeshes[0].children[0].scale.setScalar(ev.value);
+  moonFolder.addBinding(planet.moons[0], "radius", { min: 0.1, max: 1, step: 0.05 }).on("change", (ev) => {
+    planetMesh.children[1].scale.setScalar(ev.value);
   });
-  moonFolder.addBinding(planets[0].moons[0], "speed", { min: 0, max: 0.1, step: 0.001 });
-  moonFolder.addBinding(planets[0].moons[0], "distance", { min: 1, max: 10, step: 0.1 });
+  moonFolder.addBinding(planet.moons[0], "speed", { min: 0, max: 0.1, step: 0.001 });
+  moonFolder.addBinding(planet.moons[0], "distance", { min: 1, max: 10, step: 0.1 });
 
-  // Add directional light properties to the pane
-//   const lightFolder = pane.addFolder({ title: "Directional Light" });
-//   lightFolder.addBinding(directionalLight.position, "x", { min: -50, max: 50, step: 0.1 }).on("change", () => {
-//     directionalLightHelper.update();
-//   });
-//   lightFolder.addBinding(directionalLight.position, "y", { min: -50, max: 50, step: 0.1 }).on("change", () => {
-//     directionalLightHelper.update();
-//   });
-//   lightFolder.addBinding(directionalLight.position, "z", { min: -50, max: 50, step: 0.1 }).on("change", () => {
-//     directionalLightHelper.update();
-//   });
-//   lightFolder.addBinding(directionalLight, "intensity", { min: 0, max: 10, step: 0.1 }).on("change", () => {
-//     directionalLightHelper.update();
-//   });
+// Add point light properties to the pane
+const PointLightFolder = pane.addFolder({ title: "point Light" });
+PointLightFolder.addBinding(pointLight.position, "x", { min: -50, max: 50, step: 0.1 }).on("change", () => {
+    directionalLightHelper.update();
+});
+PointLightFolder.addBinding(pointLight.position, "y", { min: -50, max: 50, step: 0.1 }).on("change", () => {
+    directionalLightHelper.update();
+});
+PointLightFolder.addBinding(pointLight.position, "z", { min: -50, max: 50, step: 0.1 }).on("change", () => {
+    directionalLightHelper.update();
+});
+PointLightFolder.addBinding(pointLight, "intensity", { min: 100, max: 1000, step: 10 }).on("change", () => {
+    directionalLightHelper.update();
+});
 
-    // Add point light properties to the pane
-    const PointLightFolder = pane.addFolder({ title: "point Light" });
-    PointLightFolder.addBinding(pointLight.position, "x", { min: -50, max: 50, step: 0.1 }).on("change", () => {
-      directionalLightHelper.update();
-    });
-    PointLightFolder.addBinding(pointLight.position, "y", { min: -50, max: 50, step: 0.1 }).on("change", () => {
-      directionalLightHelper.update();
-    });
-    PointLightFolder.addBinding(pointLight.position, "z", { min: -50, max: 50, step: 0.1 }).on("change", () => {
-      directionalLightHelper.update();
-    });
-    PointLightFolder.addBinding(pointLight, "intensity", { min: 100, max: 1000, step: 10 }).on("change", () => {
-      directionalLightHelper.update();
-    });
+const ambientLightFolder = pane.addFolder({ title: "ambient Light" });
+ambientLightFolder.addBinding(ambientLight, "intensity", { min: 0, max: 5, step: 0.1 }).on("change", () => {
+    directionalLightHelper.update();
+});
 
-    const ambientLightFolder = pane.addFolder({ title: "ambient Light" });
-    ambientLightFolder.addBinding(ambientLight, "intensity", { min: 0, max: 5, step: 0.1 }).on("change", () => {
-        directionalLightHelper.update();
-      });
+const cameraFolder = pane.addFolder({ title: "camera" });
+cameraFolder.addBinding(camera.position, "z", { min: 20, max: 200, step: 1 }).on("change", ({value}) => {
+    camera.position.z = value;
+});
+cameraFolder.addBinding(camera.position, "y", { min: -50, max: 50, step: 1 }).on("change", ({value}) => {
+    camera.position.y = value;
+});
+cameraFolder.addBinding(camera.position, "x", { min: -100, max: 100, step: 1 }).on("change", ({value}) => {
+    camera.position.x = value;
+});
+
+    console.log(planetMesh)
   // Render loop
   const renderloop = () => {
-    cloudeMesh.rotation.y += 0.005;
-    planetMeshes.forEach((planet, planetIndex) => {
-      planet.rotation.y += planets[planetIndex].speed;
-      planet.children.forEach((moon, moonIndex) => {
-        moon.rotation.y += planets[planetIndex].moons[moonIndex].speed;
-        moon.position.x = Math.sin(moon.rotation.y) * planets[planetIndex].moons[moonIndex].distance;
-        moon.position.z = Math.cos(moon.rotation.y) * planets[planetIndex].moons[moonIndex].distance;
+    
+    planetMesh.rotation.y += planet.speed;
+    planetMesh.children.forEach((mesh, meshIndex) => {
+        if(mesh.name === 'Moon'){
+            mesh.rotation.y += planet.moons[meshIndex-1].speed;
+            mesh.position.x = Math.sin(mesh.rotation.y) * planet.moons[meshIndex-1].distance;
+            mesh.position.z = Math.cos(mesh.rotation.y) * planet.moons[meshIndex-1].distance;
+        }
+        if(mesh.name === 'Cloud'){
+            mesh.rotation.y += planet.cloud.speed;
+        }
+
       });
-    });
 
     controls.update();
     renderer.render(scene, camera);
