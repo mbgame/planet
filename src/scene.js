@@ -44,7 +44,7 @@ export const myScene = () => {
   const earthDayMap = textureLoader.load( new URL('../textures/2k_earth_daymap.jpg', import.meta.url).href);
   const earthNightMap = textureLoader.load( new URL('../textures/2k_earth_nightmap.jpg', import.meta.url).href);
   const earthCloudsMap = textureLoader.load( new URL('../textures/2k_earth_clouds.jpg', import.meta.url).href);
-  const moonTexture = textureLoader.load( new URL('../textures/2k_moon.jpg', import.meta.url).href);
+  const moonMap = textureLoader.load( new URL('../textures/2k_moon.jpg', import.meta.url).href);
 
   // Add materials
   const earthDayMaterial = new THREE.MeshStandardMaterial({
@@ -58,7 +58,7 @@ export const myScene = () => {
   });
 
   const moonMaterial = new THREE.MeshStandardMaterial({
-    map: moonTexture,
+    map: moonMap,
     name:'moon'
   });
 
@@ -69,14 +69,16 @@ export const myScene = () => {
     opacity: planet.cloud.opacity
     });
 
-    const materials = [];
-    materials.push(earthDayMaterial);
-    materials.push(earthNightMaterial);
-    materials.push(cloudMaterial);
-    materials.push(moonMaterial);
+    //improve performance
+    [earthDayMap, earthNightMap, earthCloudsMap, moonMap].forEach((texture) => {
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+    });
 
-  // Add geometry
-  const sphereGeometry = new THREE.SphereGeometry(1, 64, 64);
+    const materials = [earthDayMaterial, earthNightMaterial, cloudMaterial, moonMaterial];
+    
+  // Add geometry and improve its performance
+  const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
 
       // Add mesh
     const planetMesh = new THREE.Mesh( sphereGeometry, materials.find(material => material.name === planet.material));
