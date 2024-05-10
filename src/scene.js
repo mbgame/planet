@@ -15,12 +15,12 @@ export const myScene = () => {
     name: "Earth",
     radius: 13,
     position: [0, 0, 0],
-    speed: 0.002,
+    speed: 0.1,
     material: 'earthDay',
     cloud:{
       name:'Cloud',
       radius: 1.07,
-      speed: 0.005,
+      speed: 0.1,
       opacity: 0.15,
       material: 'cloud'
     },
@@ -29,7 +29,7 @@ export const myScene = () => {
         name: "Moon",
         radius: 0.25,
         distance: 2,
-        speed: 0.01,
+        speed: 0.5,
         material: 'moon'
       },
     ],
@@ -40,10 +40,11 @@ export const myScene = () => {
 
   // texture loader
   const textureLoader = new THREE.TextureLoader();
-  const earthDayMap = textureLoader.load('/textures/2k_earth_daymap.jpg');
-  const earthNightMap = textureLoader.load('/textures/2k_earth_nightmap.jpg');
-  const earthCloudsMap = textureLoader.load('/textures/2k_earth_clouds.jpg');
-  const moonTexture = textureLoader.load('/textures/2k_moon.jpg');
+ 
+  const earthDayMap = textureLoader.load( new URL('../textures/2k_earth_daymap.jpg', import.meta.url).href);
+  const earthNightMap = textureLoader.load( new URL('../textures/2k_earth_nightmap.jpg', import.meta.url).href);
+  const earthCloudsMap = textureLoader.load( new URL('../textures/2k_earth_clouds.jpg', import.meta.url).href);
+  const moonTexture = textureLoader.load( new URL('../textures/2k_moon.jpg', import.meta.url).href);
 
   // Add materials
   const earthDayMaterial = new THREE.MeshStandardMaterial({
@@ -142,14 +143,11 @@ export const myScene = () => {
   planetFolder.addBinding(planet, "radius", { min: 5, max: 20, step: 0.1 }).on("change", (ev) => {
     planetMesh.scale.setScalar(ev.value);
   });
-  planetFolder.addBinding(planet, "speed", { min: 0, max: 0.1, step: 0.001 });
-
-// Add toggle button to the pane
+  planetFolder.addBinding(planet, "speed", { min: 0, max: 1, step: 0.01 });
 const toggleTexture = { dayTexture: true };
 planetFolder.addBinding(toggleTexture, 'dayTexture', { label: 'Day Texture' }).on('change', ({value}) => {
     planetMesh.material = value ? earthDayMaterial : earthNightMaterial;
     planet.material = value ? 'earthDay' : 'earthNight';
-    // renderer.render(scene, camera);
 });
 
     // Add cloud properties to the pane
@@ -158,7 +156,7 @@ planetFolder.addBinding(toggleTexture, 'dayTexture', { label: 'Day Texture' }).o
   .on("change", (ev) => {
     planetMesh.children[0].scale.setScalar(ev.value);
   });
-  cloudFolder.addBinding(planet.cloud, "speed", { min: 0, max: 0.05, step: 0.001 });
+  cloudFolder.addBinding(planet.cloud, "speed", { min: 0, max: 1, step: 0.01 });
   cloudFolder.addBinding(planet.cloud, "opacity", { min: 0, max: 1, step: 0.05 })
  .on("change", (ev) => {
     console.log(ev.value)
@@ -172,7 +170,7 @@ planetFolder.addBinding(toggleTexture, 'dayTexture', { label: 'Day Texture' }).o
   moonFolder.addBinding(planet.moons[0], "radius", { min: 0.1, max: 1, step: 0.05 }).on("change", (ev) => {
     planetMesh.children[1].scale.setScalar(ev.value);
   });
-  moonFolder.addBinding(planet.moons[0], "speed", { min: 0, max: 0.1, step: 0.001 });
+  moonFolder.addBinding(planet.moons[0], "speed", { min: 0, max: 1, step: 0.01 });
   moonFolder.addBinding(planet.moons[0], "distance", { min: 1, max: 10, step: 0.1 });
 
 // Add point light properties to the pane
@@ -206,26 +204,32 @@ cameraFolder.addBinding(camera.position, "x", { min: -100, max: 100, step: 1 }).
     camera.position.x = value;
 });
 
-    console.log(planetMesh)
   // Render loop
+  let lastTime = performance.now();
+  let deltaTime = 0;
+  
   const renderloop = () => {
-    
-    planetMesh.rotation.y += planet.speed;
-    planetMesh.children.forEach((mesh, meshIndex) => {
-        if(mesh.name === 'Moon'){
-            mesh.rotation.y += planet.moons[meshIndex-1].speed;
-            mesh.position.x = Math.sin(mesh.rotation.y) * planet.moons[meshIndex-1].distance;
-            mesh.position.z = Math.cos(mesh.rotation.y) * planet.moons[meshIndex-1].distance;
-        }
-        if(mesh.name === 'Cloud'){
-            mesh.rotation.y += planet.cloud.speed;
-        }
-
+      const currentTime = performance.now();
+      deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+  
+      planetMesh.rotation.y += planet.speed * deltaTime;
+      planetMesh.children.forEach((mesh, meshIndex) => {
+          if(mesh.name === 'Moon'){
+              mesh.rotation.y += planet.moons[meshIndex-1].speed * deltaTime;
+              mesh.position.x = Math.sin(mesh.rotation.y) * planet.moons[meshIndex-1].distance;
+              mesh.position.z = Math.cos(mesh.rotation.y) * planet.moons[meshIndex-1].distance;
+          }
+          if(mesh.name === 'Cloud'){
+              mesh.rotation.y += planet.cloud.speed * deltaTime;
+          }
+  
       });
-
-    controls.update();
-    renderer.render(scene, camera);
-    window.requestAnimationFrame(renderloop);
+  
+      controls.update();
+      renderer.render(scene, camera);
+  
+      window.requestAnimationFrame(renderloop);
   };
 
   renderloop();
