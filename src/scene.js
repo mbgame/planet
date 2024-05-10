@@ -15,7 +15,7 @@ export const myScene = () => {
   // texture loader
   const textureLoader = new THREE.TextureLoader();
   const earthDayMap = textureLoader.load('/textures/2k_earth_daymap.jpg');
-//   const earthNightMap = textureLoader.load('/textures/2k_earth_nightmap.jpg');
+  const earthNightMap = textureLoader.load('/textures/2k_earth_nightmap.jpg');
 //   const earthNormalMap = textureLoader.load('/textures/2k_earth_normal_map.tif');
 //   const earthSpecularMap = textureLoader.load('/textures/2k_earth_specular_map.tif');
   const earthCloudsMap = textureLoader.load('/textures/2k_earth_clouds.jpg');
@@ -41,7 +41,7 @@ export const myScene = () => {
     const cloudMaterial = new THREE.MeshPhongMaterial({
     map: earthCloudsMap,
     transparent: true,
-    opacity: 0.2
+    opacity: 0.15
     });
 
     const cloudeMesh = new THREE.Mesh(cloudGeometry, cloudMaterial)
@@ -103,10 +103,10 @@ export const myScene = () => {
   console.log(planetMeshes);
 
   // Add lights
-  const ambientLight = new THREE.AmbientLight(0x333333,0.3);
+  const ambientLight = new THREE.AmbientLight(0x333333,1);
   scene.add(ambientLight);
   
-  const pointLight = new THREE.PointLight(0xffffff, 300);
+  const pointLight = new THREE.PointLight(0xffffff, 400);
   pointLight.position.set(20, 21, 15);
   scene.add(pointLight);
 
@@ -133,7 +133,7 @@ export const myScene = () => {
     0.1,
     1000
   );
-  camera.position.z = 70;
+  camera.position.z = 80;
   camera.position.y = 5;
 
   // Initialize the renderer
@@ -196,12 +196,12 @@ export const myScene = () => {
     PointLightFolder.addBinding(pointLight.position, "z", { min: -50, max: 50, step: 0.1 }).on("change", () => {
       directionalLightHelper.update();
     });
-    PointLightFolder.addBinding(pointLight, "intensity", { min: 100, max: 500, step: 10 }).on("change", () => {
+    PointLightFolder.addBinding(pointLight, "intensity", { min: 100, max: 1000, step: 10 }).on("change", () => {
       directionalLightHelper.update();
     });
 
     const ambientLightFolder = pane.addFolder({ title: "ambient Light" });
-    ambientLightFolder.addBinding(ambientLight, "intensity", { min: 0, max: 2, step: 0.1 }).on("change", () => {
+    ambientLightFolder.addBinding(ambientLight, "intensity", { min: 0, max: 5, step: 0.1 }).on("change", () => {
         directionalLightHelper.update();
       });
   // Render loop
