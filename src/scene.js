@@ -60,7 +60,7 @@ export const myScene = () => {
         {
           name: "Moon",
           radius: 0.25,
-          distance: 3,
+          distance: 2,
           speed: 0.01,
           material: moonMaterial
         },
@@ -131,9 +131,9 @@ export const myScene = () => {
     45,
     window.innerWidth / window.innerHeight,
     0.1,
-    100
+    1000
   );
-  camera.position.z = 50;
+  camera.position.z = 70;
   camera.position.y = 5;
 
   // Initialize the renderer
