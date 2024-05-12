@@ -47,17 +47,17 @@ export const myScene = () => {
   const moonMap = textureLoader.load( new URL('../textures/2k_moon.jpg', import.meta.url).href);
 
   // Add materials
-  const earthDayMaterial = new THREE.MeshStandardMaterial({
+  const earthDayMaterial = new THREE.MeshLambertMaterial({
     map: earthDayMap,
     name: 'earthDay',
   });
 
-  const earthNightMaterial = new THREE.MeshStandardMaterial({
+  const earthNightMaterial = new THREE.MeshLambertMaterial({
     map: earthNightMap,
     name: 'earthNight',
   });
 
-  const moonMaterial = new THREE.MeshStandardMaterial({
+  const moonMaterial = new THREE.MeshLambertMaterial({
     map: moonMap,
     name:'moon'
   });
@@ -73,6 +73,7 @@ export const myScene = () => {
     [earthDayMap, earthNightMap, earthCloudsMap, moonMap].forEach((texture) => {
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
+        // texture.magFilter = THREE.NearestFilter;
     });
 
     const materials = [earthDayMaterial, earthNightMaterial, cloudMaterial, moonMaterial];
@@ -207,23 +208,20 @@ cameraFolder.addBinding(camera.position, "x", { min: -100, max: 100, step: 1 }).
 });
 
   // Render loop
-  let lastTime = performance.now();
-  let deltaTime = 0;
+ const clock = new THREE.Clock();
   
   const renderloop = () => {
-      const currentTime = performance.now();
-      deltaTime = (currentTime - lastTime) / 1000;
-      lastTime = currentTime;
+    const elapsedTime = clock.getElapsedTime();
   
-      planetMesh.rotation.y += planet.speed * deltaTime;
+      planetMesh.rotation.y = planet.speed * elapsedTime;
       planetMesh.children.forEach((mesh, meshIndex) => {
           if(mesh.name === 'Moon'){
-              mesh.rotation.y += planet.moons[meshIndex-1].speed * deltaTime;
+              mesh.rotation.y = planet.moons[meshIndex-1].speed * elapsedTime;
               mesh.position.x = Math.sin(mesh.rotation.y) * planet.moons[meshIndex-1].distance;
               mesh.position.z = Math.cos(mesh.rotation.y) * planet.moons[meshIndex-1].distance;
           }
           if(mesh.name === 'Cloud'){
-              mesh.rotation.y += planet.cloud.speed * deltaTime;
+              mesh.rotation.y = planet.cloud.speed * elapsedTime;
           }
   
       });
