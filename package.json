@@ -1,0 +1,21 @@
+{
+  "name": "planet",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "homepage": "https://mbgame.github.io/planet/",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.1.1",
+    "vite": "^5.2.11"
+  },
+  "dependencies": {
+    "three": "^0.164.1",
+    "tweakpane": "^4.0.3"
+  }
+}
